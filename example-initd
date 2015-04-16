@@ -1,36 +1,55 @@
 #! /bin/sh
 ### BEGIN INIT INFO
-# Provides:          skeleton
+# Provides:          unicorn
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Example initscript
-# Description:       This file should be used to construct scripts to be
-#                    placed in /etc/init.d.
+# Short-Description: unicorn initscript
+# Description:       unicorn
 ### END INIT INFO
 
-# Author: Foo Bar <foobar@baz.org>
-#
-# Please remove the "Author" lines above and replace them
-# with your own name if you copy and modify this script.
+# Name of the rails app to start
+APP_NAME="rails-demo"
 
-# Do NOT "set -e"
+# Path to the Mina deploy directory
+MINA_DEPLOY_DIR=/home/$APP_NAME/app
+
+# Path to the Rails app
+APP_PATH=$MINA_DEPLOY_DIR/current
+
+# Unicorn configuration file
+UNICORN_CONF=$MINA_DEPLOY_DIR/shared/config/unicorn.conf.rb
+
+# Path to Unicorn PID file (as specified in unicorn configuration file)
+PIDFILE=$MINA_DEPLOY_DIR/shared/unicorn.pid
+
+# User to run unicorn as
+UNICORN_USER=$APP_NAME
+
+# determine the rvm wrapper script for unicorn that sets up the ruby environment
+# for the app according to its .ruby-version
+# See: https://github.com/wayneeseguin/rvm/issues/3365
+RVM=/usr/local/rvm/bin/rvm
+DAEMON="$($RVM in $APP_PATH do gem env gemhome 2>/dev/null)/wrappers/unicorn"
+
+DAEMON_ARGS="-D -c $UNICORN_CONF -E production"
+
+# Do NOT "set -e": https://serverfault.com/questions/143445/what-does-set-e-do-and-why-might-it-be-considered-dangerous
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="Description of the service"
-NAME=daemonexecutablename
-DAEMON=/usr/sbin/$NAME
-DAEMON_ARGS="--options args"
-PIDFILE=/var/run/$NAME.pid
-SCRIPTNAME=/etc/init.d/$NAME
+DESC=$APP_NAME
+NAME=unicorn
+SCRIPTNAME=/etc/init.d/$APP_NAME
 
-# Exit if the package is not installed
-[ -x "$DAEMON" ] || exit 0
+# -----------------------------------------------------------------
+# This is copied from /etc/init.d/skeleton
+# changes:
+# - added "--chuid $UNICORN_USER", removed "--name $NAME"
+# - enabled reload
+# - added -p $PIDFILE to status
 
-# Read configuration variable file if it is present
-[ -r /etc/default/$NAME ] && . /etc/default/$NAME
 
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
@@ -49,9 +68,9 @@ do_start()
 	#   0 if daemon has been started
 	#   1 if daemon was already running
 	#   2 if daemon could not be started
-	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --chuid $UNICORN_USER --test > /dev/null \
 		|| return 1
-	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --chuid $UNICORN_USER -- \
 		$DAEMON_ARGS \
 		|| return 2
 	# Add code here, if necessary, that waits for the process to be ready
@@ -69,7 +88,7 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too if this is a daemon that forks
@@ -89,12 +108,7 @@ do_stop()
 # Function that sends a SIGHUP to the daemon/service
 #
 do_reload() {
-	#
-	# If the daemon can reload its configuration without
-	# restarting (for example, when it is sent a SIGHUP),
-	# then implement that here.
-	#
-	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
+	start-stop-daemon --stop --signal HUP --quiet --pidfile $PIDFILE
 	return 0
 }
 
@@ -116,17 +130,13 @@ case "$1" in
 	esac
 	;;
   status)
-	status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
+	status_of_proc -p $PIDFILE "$DAEMON" "$NAME" && exit 0 || exit $?
 	;;
-  #reload|force-reload)
-	#
-	# If do_reload() is not implemented then leave this commented out
-	# and leave 'force-reload' as an alias for 'restart'.
-	#
-	#log_daemon_msg "Reloading $DESC" "$NAME"
-	#do_reload
-	#log_end_msg $?
-	#;;
+  reload)
+	log_daemon_msg "Reloading $DESC" "$NAME"
+	do_reload
+	log_end_msg $?
+	;;
   restart|force-reload)
 	#
 	# If the "reload" option is implemented then remove the
