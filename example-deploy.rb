@@ -64,7 +64,7 @@ task :deploy => :environment do
 
     to :launch do
       queue "mkdir -p #{deploy_to}/#{current_path}/tmp/"
-      #queue "service #{user} reload"
+      #queue "service #{user} restart"
     end
   end
 end
