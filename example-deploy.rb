@@ -25,9 +25,11 @@ set :shared_paths, ['config/database.yml', 'config/secrets.yml', 'log']
 # This task is the environment that is loaded for most commands, such as
 # `mina deploy` or `mina rake`.
 task :environment do
+  ruby_version = File.read('.ruby-version').strip
+  raise "Couldn't determine Ruby version: Do you have a file .ruby-version in your project root?" if ruby_version.empty?
   queue %{
     source /etc/profile.d/rvm.sh
-    rvm use || exit 1
+    rvm use #{ruby_version} || exit 1
   }
 end
 
