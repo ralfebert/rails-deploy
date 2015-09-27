@@ -78,8 +78,8 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
 <body>
 <h2></h2>
 
-<div class="highlight"><pre><span class="gd">--- config/deploy.rb	2015-09-27 13:37:42.000000000 +0200</span>
-<span class="gi">+++ example-deploy.rb	2015-09-27 13:37:24.000000000 +0200</span>
+<div class="highlight"><pre><span class="gd">--- config/deploy.rb	2015-09-27 13:54:15.000000000 +0200</span>
+<span class="gi">+++ example-deploy.rb	2015-09-27 13:54:01.000000000 +0200</span>
 <span class="gu">@@ -1,8 +1,6 @@</span>
  require &#39;mina/bundler&#39;
  require &#39;mina/rails&#39;
@@ -130,7 +130,31 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
  task :setup =&gt; :environment do
    queue! %[mkdir -p &quot;#{deploy_to}/#{shared_path}/log&quot;]
    queue! %[chmod g+rx,u+rwx &quot;#{deploy_to}/#{shared_path}/log&quot;]
-<span class="gu">@@ -77,7 +70,7 @@</span>
+<span class="gu">@@ -52,12 +45,17 @@</span>
+   queue! %[touch &quot;#{deploy_to}/#{shared_path}/config/secrets.yml&quot;]
+   queue  %[echo &quot;-----&gt; Be sure to edit &#39;#{deploy_to}/#{shared_path}/config/database.yml&#39; and &#39;secrets.yml&#39;.&quot;]
+ 
+<span class="gd">-  queue %[</span>
+<span class="gd">-    repo_host=`echo $repo | sed -e &#39;s/.*@//g&#39; -e &#39;s/:.*//g&#39;` &amp;&amp;</span>
+<span class="gd">-    repo_port=`echo $repo | grep -o &#39;:[0-9]*&#39; | sed -e &#39;s/://g&#39;` &amp;&amp;</span>
+<span class="gd">-    if [ -z &quot;${repo_port}&quot; ]; then repo_port=22; fi &amp;&amp;</span>
+<span class="gd">-    ssh-keyscan -p $repo_port -H $repo_host &gt;&gt; ~/.ssh/known_hosts</span>
+<span class="gd">-  ]</span>
+<span class="gi">+  # Add the repository server to .ssh/known_hosts</span>
+<span class="gi">+  if repository</span>
+<span class="gi">+      repo_host = repository.split(%r{@|://}).last.split(%r{:|\/}).first</span>
+<span class="gi">+      repo_port = /:([0-9]+)/.match(repository) &amp;&amp; /:([0-9]+)/.match(repository)[1] || &#39;22&#39;</span>
+<span class="gi">+</span>
+<span class="gi">+      queue %[</span>
+<span class="gi">+        if ! ssh-keygen -H  -F #{repo_host} &amp;&gt;/dev/null; then</span>
+<span class="gi">+          ssh-keyscan -t rsa -p #{repo_port} -H #{repo_host} &gt;&gt; ~/.ssh/known_hosts</span>
+<span class="gi">+        fi</span>
+<span class="gi">+      ]</span>
+<span class="gi">+  end</span>
+ end
+ 
+ desc &quot;Deploys the current version to the server.&quot;
+<span class="gu">@@ -77,7 +75,7 @@</span>
  
      to :launch do
        queue &quot;mkdir -p #{deploy_to}/#{current_path}/tmp/&quot;
