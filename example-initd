@@ -31,7 +31,7 @@ UNICORN_USER=$APP_NAME
 # for the app according to its .ruby-version
 # See: https://github.com/wayneeseguin/rvm/issues/3365
 RVM=/usr/local/rvm/bin/rvm
-DAEMON="$($RVM in $APP_PATH do gem env gemhome 2>/dev/null)/wrappers/unicorn"
+DAEMON="$RVM in $APP_PATH do bundle exec unicorn"
 
 DAEMON_ARGS="-D -c $UNICORN_CONF -E production"
 
