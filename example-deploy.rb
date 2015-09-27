@@ -39,23 +39,38 @@ task :setup => :environment do
   queue! %[chmod g+rx,u+rwx "#{deploy_to}/#{shared_path}/log"]
 
   queue! %[mkdir -p "#{deploy_to}/#{shared_path}/config"]
-  queue! %[chmod g+rx,u+rwx "#{deploy_to}/#{shared_path}/config"]
-
-  queue! %[touch "#{deploy_to}/#{shared_path}/config/database.yml"]
-  queue! %[touch "#{deploy_to}/#{shared_path}/config/secrets.yml"]
-  queue  %[echo "-----> Be sure to edit '#{deploy_to}/#{shared_path}/config/database.yml' and 'secrets.yml'."]
-
+  
   # Add the repository server to .ssh/known_hosts
   if repository
-      repo_host = repository.split(%r{@|://}).last.split(%r{:|\/}).first
-      repo_port = /:([0-9]+)/.match(repository) && /:([0-9]+)/.match(repository)[1] || '22'
+    repo_host = repository.split(%r{@|://}).last.split(%r{:|\/}).first
+    repo_port = /:([0-9]+)/.match(repository) && /:([0-9]+)/.match(repository)[1] || '22'
 
-      queue %[
-        if ! ssh-keygen -H  -F #{repo_host} &>/dev/null; then
-          ssh-keyscan -t rsa -p #{repo_port} -H #{repo_host} >> ~/.ssh/known_hosts
-        fi
-      ]
+    queue! %[
+      if ! ssh-keygen -H  -F #{repo_host} &>/dev/null; then
+        ssh-keyscan -t rsa -p #{repo_port} -H #{repo_host} >> ~/.ssh/known_hosts
+      fi
+    ]
   end
+  
+  # Create database.yml for Postgres if it doesn't exist
+  path_database_yml = "#{deploy_to}/#{shared_path}/config/database.yml"
+  database_yml = %[production:
+  database: rails-demo
+  adapter: postgresql
+  pool: 5
+  timeout: 5000]
+  queue! %[ test -e #{path_database_yml} || echo "#{database_yml}" > #{path_database_yml} ]
+  
+  # Create secrets.yml if it doesn't exist
+  path_secrets_yml = "#{deploy_to}/#{shared_path}/config/secrets.yml"
+  secret = 
+  secrets_yml = %[production:
+  secret_key_base:
+    #{`rake secret`.strip}]
+  queue! %[ test -e #{path_secrets_yml} || echo "#{secrets_yml}" > #{path_secrets_yml} ]
+  
+  queue! %[chmod g+rx,u+rwx,o-rwx "#{deploy_to}/#{shared_path}/config"]
+
 end
 
 desc "Deploys the current version to the server."
