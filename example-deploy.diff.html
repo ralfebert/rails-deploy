@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+  <title></title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <style type="text/css">
+td.linenos { background-color: #f0f0f0; padding-right: 10px; }
+span.lineno { background-color: #f0f0f0; padding: 0 5px 0 5px; }
+pre { line-height: 125%; }
+body .hll { background-color: #ffffcc }
+body  { background: #f8f8f8; }
+body .c { color: #008800; font-style: italic } /* Comment */
+body .err { border: 1px solid #FF0000 } /* Error */
+body .k { color: #AA22FF; font-weight: bold } /* Keyword */
+body .o { color: #666666 } /* Operator */
+body .cm { color: #008800; font-style: italic } /* Comment.Multiline */
+body .cp { color: #008800 } /* Comment.Preproc */
+body .c1 { color: #008800; font-style: italic } /* Comment.Single */
+body .cs { color: #008800; font-weight: bold } /* Comment.Special */
+body .gd { color: #A00000 } /* Generic.Deleted */
+body .ge { font-style: italic } /* Generic.Emph */
+body .gr { color: #FF0000 } /* Generic.Error */
+body .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+body .gi { color: #00A000 } /* Generic.Inserted */
+body .go { color: #888888 } /* Generic.Output */
+body .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+body .gs { font-weight: bold } /* Generic.Strong */
+body .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+body .gt { color: #0044DD } /* Generic.Traceback */
+body .kc { color: #AA22FF; font-weight: bold } /* Keyword.Constant */
+body .kd { color: #AA22FF; font-weight: bold } /* Keyword.Declaration */
+body .kn { color: #AA22FF; font-weight: bold } /* Keyword.Namespace */
+body .kp { color: #AA22FF } /* Keyword.Pseudo */
+body .kr { color: #AA22FF; font-weight: bold } /* Keyword.Reserved */
+body .kt { color: #00BB00; font-weight: bold } /* Keyword.Type */
+body .m { color: #666666 } /* Literal.Number */
+body .s { color: #BB4444 } /* Literal.String */
+body .na { color: #BB4444 } /* Name.Attribute */
+body .nb { color: #AA22FF } /* Name.Builtin */
+body .nc { color: #0000FF } /* Name.Class */
+body .no { color: #880000 } /* Name.Constant */
+body .nd { color: #AA22FF } /* Name.Decorator */
+body .ni { color: #999999; font-weight: bold } /* Name.Entity */
+body .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+body .nf { color: #00A000 } /* Name.Function */
+body .nl { color: #A0A000 } /* Name.Label */
+body .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+body .nt { color: #008000; font-weight: bold } /* Name.Tag */
+body .nv { color: #B8860B } /* Name.Variable */
+body .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+body .w { color: #bbbbbb } /* Text.Whitespace */
+body .mb { color: #666666 } /* Literal.Number.Bin */
+body .mf { color: #666666 } /* Literal.Number.Float */
+body .mh { color: #666666 } /* Literal.Number.Hex */
+body .mi { color: #666666 } /* Literal.Number.Integer */
+body .mo { color: #666666 } /* Literal.Number.Oct */
+body .sb { color: #BB4444 } /* Literal.String.Backtick */
+body .sc { color: #BB4444 } /* Literal.String.Char */
+body .sd { color: #BB4444; font-style: italic } /* Literal.String.Doc */
+body .s2 { color: #BB4444 } /* Literal.String.Double */
+body .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+body .sh { color: #BB4444 } /* Literal.String.Heredoc */
+body .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+body .sx { color: #008000 } /* Literal.String.Other */
+body .sr { color: #BB6688 } /* Literal.String.Regex */
+body .s1 { color: #BB4444 } /* Literal.String.Single */
+body .ss { color: #B8860B } /* Literal.String.Symbol */
+body .bp { color: #AA22FF } /* Name.Builtin.Pseudo */
+body .vc { color: #B8860B } /* Name.Variable.Class */
+body .vg { color: #B8860B } /* Name.Variable.Global */
+body .vi { color: #B8860B } /* Name.Variable.Instance */
+body .il { color: #666666 } /* Literal.Number.Integer.Long */
+
+  </style>
+</head>
+<body>
+<h2></h2>
+
+<div class="highlight"><pre><span class="gd">--- config/deploy.rb	2015-09-27 13:37:42.000000000 +0200</span>
+<span class="gi">+++ example-deploy.rb	2015-09-27 13:37:24.000000000 +0200</span>
+<span class="gu">@@ -1,8 +1,6 @@</span>
+ require &#39;mina/bundler&#39;
+ require &#39;mina/rails&#39;
+ require &#39;mina/git&#39;
+<span class="gd">-# require &#39;mina/rbenv&#39;  # for rbenv support. (http://rbenv.org)</span>
+<span class="gd">-# require &#39;mina/rvm&#39;    # for rvm support. (http://rvm.io)</span>
+ 
+ # Basic settings:
+ #   domain       - The hostname to SSH to.
+<span class="gu">@@ -11,13 +9,11 @@</span>
+ #   branch       - Branch name to deploy. (needed by mina/git)
+ 
+ set :domain, &#39;foobar.com&#39;
+<span class="gd">-set :deploy_to, &#39;/var/www/foobar.com&#39;</span>
+<span class="gd">-set :repository, &#39;git://...&#39;</span>
+<span class="gi">+set :user, &#39;rails-demo&#39;</span>
+<span class="gi">+set :deploy_to, &quot;/home/#{user}/app&quot;</span>
+<span class="gi">+set :repository, &#39;git@bitbucket.org:example/rails-demo.git&#39;</span>
+ set :branch, &#39;master&#39;
+ 
+<span class="gd">-# For system-wide RVM install.</span>
+<span class="gd">-#   set :rvm_path, &#39;/usr/local/rvm/bin/rvm&#39;</span>
+<span class="gd">-</span>
+ # Manually create these paths in shared/ (eg: shared/config/database.yml) in your server.
+ # They will be linked in the &#39;deploy:link_shared_paths&#39; step.
+ set :shared_paths, [&#39;config/database.yml&#39;, &#39;config/secrets.yml&#39;, &#39;log&#39;]
+<span class="gu">@@ -30,17 +26,14 @@</span>
+ # This task is the environment that is loaded for most commands, such as
+ # `mina deploy` or `mina rake`.
+ task :environment do
+<span class="gd">-  # If you&#39;re using rbenv, use this to load the rbenv environment.</span>
+<span class="gd">-  # Be sure to commit your .ruby-version or .rbenv-version to your repository.</span>
+<span class="gd">-  # invoke :&#39;rbenv:load&#39;</span>
+<span class="gd">-</span>
+<span class="gd">-  # For those using RVM, use this to load an RVM version@gemset.</span>
+<span class="gd">-  # invoke :&#39;rvm:use[ruby-1.9.3-p125@default]&#39;</span>
+<span class="gi">+  ruby_version = File.read(&#39;.ruby-version&#39;).strip</span>
+<span class="gi">+  raise &quot;Couldn&#39;t determine Ruby version: Do you have a file .ruby-version in your project root?&quot; if ruby_version.empty?</span>
+<span class="gi">+  queue %{</span>
+<span class="gi">+    source /etc/profile.d/rvm.sh</span>
+<span class="gi">+    rvm use #{ruby_version} || exit 1</span>
+<span class="gi">+  }</span>
+ end
+ 
+<span class="gd">-# Put any custom mkdir&#39;s in here for when `mina setup` is ran.</span>
+<span class="gd">-# For Rails apps, we&#39;ll make some of the shared paths that are shared between</span>
+<span class="gd">-# all releases.</span>
+ task :setup =&gt; :environment do
+   queue! %[mkdir -p &quot;#{deploy_to}/#{shared_path}/log&quot;]
+   queue! %[chmod g+rx,u+rwx &quot;#{deploy_to}/#{shared_path}/log&quot;]
+<span class="gu">@@ -77,7 +70,7 @@</span>
+ 
+     to :launch do
+       queue &quot;mkdir -p #{deploy_to}/#{current_path}/tmp/&quot;
+<span class="gd">-      queue &quot;touch #{deploy_to}/#{current_path}/tmp/restart.txt&quot;</span>
+<span class="gi">+      #queue &quot;service #{user} restart&quot;</span>
+     end
+   end
+ end
+</pre></div>
+</body>
+</html>
