@@ -89,7 +89,6 @@ task :deploy => :environment do
     invoke :'deploy:cleanup'
 
     to :launch do
-      queue "mkdir -p #{deploy_to}/#{current_path}/tmp/"
       #queue "service #{user} restart"
     end
   end
