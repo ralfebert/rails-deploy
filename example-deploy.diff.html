@@ -78,8 +78,8 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
 <body>
 <h2></h2>
 
-<div class="highlight"><pre><span class="gd">--- config/deploy.rb	2015-09-27 14:17:48.000000000 +0200</span>
-<span class="gi">+++ example-deploy.rb	2015-09-27 14:17:16.000000000 +0200</span>
+<div class="highlight"><pre><span class="gd">--- config/deploy.rb	2016-04-21 14:53:56.000000000 +0200</span>
+<span class="gi">+++ example-deploy.rb	2016-04-21 14:47:13.000000000 +0200</span>
 <span class="gu">@@ -1,8 +1,6 @@</span>
  require &#39;mina/bundler&#39;
  require &#39;mina/rails&#39;
@@ -106,7 +106,7 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
  # Manually create these paths in shared/ (eg: shared/config/database.yml) in your server.
  # They will be linked in the &#39;deploy:link_shared_paths&#39; step.
  set :shared_paths, [&#39;config/database.yml&#39;, &#39;config/secrets.yml&#39;, &#39;log&#39;]
-<span class="gu">@@ -30,34 +26,51 @@</span>
+<span class="gu">@@ -30,28 +26,21 @@</span>
  # This task is the environment that is loaded for most commands, such as
  # `mina deploy` or `mina rake`.
  task :environment do
@@ -133,23 +133,25 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
  
    queue! %[mkdir -p &quot;#{deploy_to}/#{shared_path}/config&quot;]
 <span class="gd">-  queue! %[chmod g+rx,u+rwx &quot;#{deploy_to}/#{shared_path}/config&quot;]</span>
+<span class="gd">-</span>
+<span class="gd">-  queue! %[touch &quot;#{deploy_to}/#{shared_path}/config/database.yml&quot;]</span>
+<span class="gd">-  queue! %[touch &quot;#{deploy_to}/#{shared_path}/config/secrets.yml&quot;]</span>
+<span class="gd">-  queue  %[echo &quot;-----&gt; Be sure to edit &#39;#{deploy_to}/#{shared_path}/config/database.yml&#39; and &#39;secrets.yml&#39;.&quot;]</span>
+<span class="gd">-</span>
 <span class="gi">+  </span>
 <span class="gi">+  # Add the repository server to .ssh/known_hosts</span>
-<span class="gi">+  if repository</span>
-<span class="gi">+    repo_host = repository.split(%r{@|://}).last.split(%r{:|\/}).first</span>
-<span class="gi">+    repo_port = /:([0-9]+)/.match(repository) &amp;&amp; /:([0-9]+)/.match(repository)[1] || &#39;22&#39;</span>
-<span class="gi">+</span>
-<span class="gi">+    queue! %[</span>
-<span class="gi">+      if ! ssh-keygen -H  -F #{repo_host} &amp;&gt;/dev/null; then</span>
-<span class="gi">+        ssh-keyscan -t rsa -p #{repo_port} -H #{repo_host} &gt;&gt; ~/.ssh/known_hosts</span>
-<span class="gi">+      fi</span>
-<span class="gi">+    ]</span>
-<span class="gi">+  end</span>
+   if repository
+     repo_host = repository.split(%r{@|://}).last.split(%r{:|\/}).first
+     repo_port = /:([0-9]+)/.match(repository) &amp;&amp; /:([0-9]+)/.match(repository)[1] || &#39;22&#39;
+<span class="gu">@@ -62,6 +51,26 @@</span>
+       fi
+     ]
+   end
 <span class="gi">+  </span>
 <span class="gi">+  # Create database.yml for Postgres if it doesn&#39;t exist</span>
 <span class="gi">+  path_database_yml = &quot;#{deploy_to}/#{shared_path}/config/database.yml&quot;</span>
 <span class="gi">+  database_yml = %[production:</span>
-<span class="gi">+  database: rails-demo</span>
+<span class="gi">+  database: #{user}</span>
 <span class="gi">+  adapter: postgresql</span>
 <span class="gi">+  pool: 5</span>
 <span class="gi">+  timeout: 5000]</span>
@@ -164,24 +166,15 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
 <span class="gi">+  queue! %[ test -e #{path_secrets_yml} || echo &quot;#{secrets_yml}&quot; &gt; #{path_secrets_yml} ]</span>
 <span class="gi">+  </span>
 <span class="gi">+  queue! %[chmod g+rx,u+rwx,o-rwx &quot;#{deploy_to}/#{shared_path}/config&quot;]</span>
- 
-<span class="gd">-  queue! %[touch &quot;#{deploy_to}/#{shared_path}/config/database.yml&quot;]</span>
-<span class="gd">-  queue! %[touch &quot;#{deploy_to}/#{shared_path}/config/secrets.yml&quot;]</span>
-<span class="gd">-  queue  %[echo &quot;-----&gt; Be sure to edit &#39;#{deploy_to}/#{shared_path}/config/database.yml&#39; and &#39;secrets.yml&#39;.&quot;]</span>
-<span class="gd">-</span>
-<span class="gd">-  queue %[</span>
-<span class="gd">-    repo_host=`echo $repo | sed -e &#39;s/.*@//g&#39; -e &#39;s/:.*//g&#39;` &amp;&amp;</span>
-<span class="gd">-    repo_port=`echo $repo | grep -o &#39;:[0-9]*&#39; | sed -e &#39;s/://g&#39;` &amp;&amp;</span>
-<span class="gd">-    if [ -z &quot;${repo_port}&quot; ]; then repo_port=22; fi &amp;&amp;</span>
-<span class="gd">-    ssh-keyscan -p $repo_port -H $repo_host &gt;&gt; ~/.ssh/known_hosts</span>
-<span class="gd">-  ]</span>
+<span class="gi">+</span>
  end
  
  desc &quot;Deploys the current version to the server.&quot;
-<span class="gu">@@ -77,7 +90,7 @@</span>
+<span class="gu">@@ -80,8 +89,7 @@</span>
+     invoke :&#39;deploy:cleanup&#39;
  
      to :launch do
-       queue &quot;mkdir -p #{deploy_to}/#{current_path}/tmp/&quot;
+<span class="gd">-      queue &quot;mkdir -p #{deploy_to}/#{current_path}/tmp/&quot;</span>
 <span class="gd">-      queue &quot;touch #{deploy_to}/#{current_path}/tmp/restart.txt&quot;</span>
 <span class="gi">+      #queue &quot;service #{user} restart&quot;</span>
      end

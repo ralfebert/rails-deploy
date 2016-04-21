@@ -45,7 +45,7 @@ task :setup => :environment do
     repo_host = repository.split(%r{@|://}).last.split(%r{:|\/}).first
     repo_port = /:([0-9]+)/.match(repository) && /:([0-9]+)/.match(repository)[1] || '22'
 
-    queue! %[
+    queue %[
       if ! ssh-keygen -H  -F #{repo_host} &>/dev/null; then
         ssh-keyscan -t rsa -p #{repo_port} -H #{repo_host} >> ~/.ssh/known_hosts
       fi
@@ -55,7 +55,7 @@ task :setup => :environment do
   # Create database.yml for Postgres if it doesn't exist
   path_database_yml = "#{deploy_to}/#{shared_path}/config/database.yml"
   database_yml = %[production:
-  database: rails-demo
+  database: #{user}
   adapter: postgresql
   pool: 5
   timeout: 5000]
