@@ -78,116 +78,106 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
 <body>
 <h2></h2>
 
-<div class="highlight"><pre><span class="gd">--- config/deploy.rb	2016-05-28 21:30:06.000000000 +0200</span>
-<span class="gi">+++ example-deploy.rb	2016-05-28 21:30:05.000000000 +0200</span>
-<span class="gu">@@ -1,8 +1,6 @@</span>
- require &#39;mina/bundler&#39;
+<div class="highlight"><pre><span class="gd">--- config/deploy.rb	2016-10-14 11:01:56.000000000 +0200</span>
+<span class="gi">+++ example-deploy.rb	2016-10-14 11:01:51.000000000 +0200</span>
+<span class="gu">@@ -1,7 +1,6 @@</span>
  require &#39;mina/rails&#39;
  require &#39;mina/git&#39;
-<span class="gd">-# require &#39;mina/rbenv&#39;  # for rbenv support. (http://rbenv.org)</span>
-<span class="gd">-# require &#39;mina/rvm&#39;    # for rvm support. (http://rvm.io)</span>
+<span class="gd">-# require &#39;mina/rbenv&#39;  # for rbenv support. (https://rbenv.org)</span>
+<span class="gd">-# require &#39;mina/rvm&#39;    # for rvm support. (https://rvm.io)</span>
+<span class="gi">+require &#39;mina/rvm&#39;</span>
  
  # Basic settings:
  #   domain       - The hostname to SSH to.
-<span class="gu">@@ -11,13 +9,11 @@</span>
+<span class="gu">@@ -10,9 +9,11 @@</span>
  #   branch       - Branch name to deploy. (needed by mina/git)
  
  set :domain, &#39;foobar.com&#39;
 <span class="gd">-set :deploy_to, &#39;/var/www/foobar.com&#39;</span>
 <span class="gd">-set :repository, &#39;git://...&#39;</span>
 <span class="gi">+set :user, &#39;rails-demo&#39;</span>
-<span class="gi">+set :deploy_to, &quot;/home/#{user}/app&quot;</span>
+<span class="gi">+set :deploy_to, &quot;/home/#{fetch(:user)}/app&quot;</span>
 <span class="gi">+set :repository, &#39;git@bitbucket.org:example/rails-demo.git&#39;</span>
  set :branch, &#39;master&#39;
+<span class="gi">+set :rvm_use_path, &#39;/etc/profile.d/rvm.sh&#39;</span>
  
-<span class="gd">-# For system-wide RVM install.</span>
-<span class="gd">-#   set :rvm_path, &#39;/usr/local/rvm/bin/rvm&#39;</span>
-<span class="gd">-</span>
- # Manually create these paths in shared/ (eg: shared/config/database.yml) in your server.
+ # Optional settings:
+ #   set :user, &#39;foobar&#39;          # Username in the server to SSH to.
+<span class="gu">@@ -20,24 +21,41 @@</span>
+ #   set :forward_agent, true     # SSH forward_agent.
+ 
  # They will be linked in the &#39;deploy:link_shared_paths&#39; step.
- set :shared_paths, [&#39;config/database.yml&#39;, &#39;config/secrets.yml&#39;, &#39;log&#39;]
-<span class="gu">@@ -30,34 +26,51 @@</span>
- # This task is the environment that is loaded for most commands, such as
+<span class="gd">-# set :shared_dirs, fetch(:shared_dirs, []).push(&#39;config&#39;)</span>
+<span class="gd">-# set :shared_files, fetch(:shared_files, []).push(&#39;config/database.yml&#39;, &#39;config/secrets.yml&#39;)</span>
+<span class="gi">+set :shared_files, fetch(:shared_files, []).push(&#39;config/database.yml&#39;, &#39;config/secrets.yml&#39;)</span>
+ 
+ # This task is the environment that is loaded all remote run commands, such as
  # `mina deploy` or `mina rake`.
  task :environment do
 <span class="gd">-  # If you&#39;re using rbenv, use this to load the rbenv environment.</span>
 <span class="gd">-  # Be sure to commit your .ruby-version or .rbenv-version to your repository.</span>
 <span class="gd">-  # invoke :&#39;rbenv:load&#39;</span>
-<span class="gd">-</span>
-<span class="gd">-  # For those using RVM, use this to load an RVM version@gemset.</span>
-<span class="gd">-  # invoke :&#39;rvm:use[ruby-1.9.3-p125@default]&#39;</span>
 <span class="gi">+  ruby_version = File.read(&#39;.ruby-version&#39;).strip</span>
 <span class="gi">+  raise &quot;Couldn&#39;t determine Ruby version: Do you have a file .ruby-version in your project root?&quot; if ruby_version.empty?</span>
-<span class="gi">+  queue %{</span>
-<span class="gi">+    source /etc/profile.d/rvm.sh</span>
-<span class="gi">+    rvm use #{ruby_version} || exit 1</span>
-<span class="gi">+  }</span>
+ 
+<span class="gd">-  # For those using RVM, use this to load an RVM version@gemset.</span>
+<span class="gd">-  # invoke :&#39;rvm:use&#39;, &#39;ruby-1.9.3-p125@default&#39;</span>
+<span class="gi">+  invoke :&#39;rvm:use&#39;, ruby_version</span>
  end
  
-<span class="gd">-# Put any custom mkdir&#39;s in here for when `mina setup` is ran.</span>
-<span class="gd">-# For Rails apps, we&#39;ll make some of the shared paths that are shared between</span>
-<span class="gd">-# all releases.</span>
- task :setup =&gt; :environment do
-   queue! %[mkdir -p &quot;#{deploy_to}/#{shared_path}/log&quot;]
-   queue! %[chmod g+rx,u+rwx &quot;#{deploy_to}/#{shared_path}/log&quot;]
- 
-   queue! %[mkdir -p &quot;#{deploy_to}/#{shared_path}/config&quot;]
-<span class="gd">-  queue! %[chmod g+rx,u+rwx &quot;#{deploy_to}/#{shared_path}/config&quot;]</span>
-<span class="gi">+  </span>
-<span class="gi">+  # Add the repository server to .ssh/known_hosts</span>
-<span class="gi">+  if repository</span>
-<span class="gi">+    repo_host = repository.split(%r{@|://}).last.split(%r{:|\/}).first</span>
-<span class="gi">+    repo_port = /:([0-9]+)/.match(repository) &amp;&amp; /:([0-9]+)/.match(repository)[1] || &#39;22&#39;</span>
+<span class="gd">-# Put any custom commands you need to run at setup</span>
+<span class="gd">-# All paths in `shared_dirs` and `shared_paths` will be created on their own.</span>
+ task :setup do
+<span class="gd">-  # command %{rbenv install 2.3.0}</span>
 <span class="gi">+</span>
-<span class="gi">+    queue %[</span>
-<span class="gi">+      if ! ssh-keygen -H  -F #{repo_host} &amp;&gt;/dev/null; then</span>
-<span class="gi">+        ssh-keyscan -t rsa -p #{repo_port} -H #{repo_host} &gt;&gt; ~/.ssh/known_hosts</span>
-<span class="gi">+      fi</span>
-<span class="gi">+    ]</span>
-<span class="gi">+  end</span>
-<span class="gi">+  </span>
-<span class="gi">+  # Create database.yml for Postgres if it doesn&#39;t exist</span>
-<span class="gi">+  path_database_yml = &quot;#{deploy_to}/#{shared_path}/config/database.yml&quot;</span>
-<span class="gi">+  database_yml = %[production:</span>
-<span class="gi">+  database: #{user}</span>
+<span class="gi">+  in_path(fetch(:shared_path)) do</span>
+<span class="gi">+</span>
+<span class="gi">+    command %[mkdir config]</span>
+<span class="gi">+</span>
+<span class="gi">+    # Create database.yml for Postgres if it doesn&#39;t exist</span>
+<span class="gi">+    path_database_yml = &quot;config/database.yml&quot;</span>
+<span class="gi">+    database_yml = %[production:</span>
+<span class="gi">+  database: #{fetch(:user)}</span>
 <span class="gi">+  adapter: postgresql</span>
 <span class="gi">+  pool: 5</span>
 <span class="gi">+  timeout: 5000]</span>
-<span class="gi">+  queue! %[ test -e #{path_database_yml} || echo &quot;#{database_yml}&quot; &gt; #{path_database_yml} ]</span>
-<span class="gi">+  </span>
-<span class="gi">+  # Create secrets.yml if it doesn&#39;t exist</span>
-<span class="gi">+  path_secrets_yml = &quot;#{deploy_to}/#{shared_path}/config/secrets.yml&quot;</span>
-<span class="gi">+  secret = </span>
-<span class="gi">+  secrets_yml = %[production:</span>
-<span class="gi">+  secret_key_base:</span>
-<span class="gi">+    #{`rake secret`.strip}]</span>
-<span class="gi">+  queue! %[ test -e #{path_secrets_yml} || echo &quot;#{secrets_yml}&quot; &gt; #{path_secrets_yml} ]</span>
-<span class="gi">+  </span>
-<span class="gi">+  queue! %[chmod g+rx,u+rwx,o-rwx &quot;#{deploy_to}/#{shared_path}/config&quot;]</span>
- 
-<span class="gd">-  queue! %[touch &quot;#{deploy_to}/#{shared_path}/config/database.yml&quot;]</span>
-<span class="gd">-  queue! %[touch &quot;#{deploy_to}/#{shared_path}/config/secrets.yml&quot;]</span>
-<span class="gd">-  queue  %[echo &quot;-----&gt; Be sure to edit &#39;#{deploy_to}/#{shared_path}/config/database.yml&#39; and &#39;secrets.yml&#39;.&quot;]</span>
-<span class="gd">-</span>
-<span class="gd">-  queue %[</span>
-<span class="gd">-    repo_host=`echo $repo | sed -e &#39;s/.*@//g&#39; -e &#39;s/:.*//g&#39;` &amp;&amp;</span>
-<span class="gd">-    repo_port=`echo $repo | grep -o &#39;:[0-9]*&#39; | sed -e &#39;s/://g&#39;` &amp;&amp;</span>
-<span class="gd">-    if [ -z &quot;${repo_port}&quot; ]; then repo_port=22; fi &amp;&amp;</span>
-<span class="gd">-    ssh-keyscan -p $repo_port -H $repo_host &gt;&gt; ~/.ssh/known_hosts</span>
-<span class="gd">-  ]</span>
+<span class="gi">+    command %[test -e #{path_database_yml} || echo &quot;#{database_yml}&quot; &gt; #{path_database_yml}]</span>
+<span class="gi">+</span>
+<span class="gi">+    # Create secrets.yml if it doesn&#39;t exist</span>
+<span class="gi">+    path_secrets_yml = &quot;config/secrets.yml&quot;</span>
+<span class="gi">+    secrets_yml = %[production:\n  secret_key_base:\n    #{`rake secret`.strip}]</span>
+<span class="gi">+    command %[test -e #{path_secrets_yml} || echo &quot;#{secrets_yml}&quot; &gt; #{path_secrets_yml}]</span>
+<span class="gi">+    </span>
+<span class="gi">+    # Remove others-permission for config directory</span>
+<span class="gi">+    command %[chmod -R o-rwx config]</span>
+<span class="gi">+  end</span>
+<span class="gi">+</span>
  end
  
  desc &quot;Deploys the current version to the server.&quot;
-<span class="gu">@@ -76,8 +89,7 @@</span>
+<span class="gu">@@ -48,6 +66,10 @@</span>
+     # Put things that will set up an empty directory into a fully set-up
+     # instance of your project.
+     invoke :&#39;git:clone&#39;
+<span class="gi">+    # Workaround for https://github.com/mina-deploy/mina/issues/452</span>
+<span class="gi">+    fetch(:shared_files, []).each do |linked_path|</span>
+<span class="gi">+      command %{rm -f &quot;./#{linked_path}&quot;}</span>
+<span class="gi">+    end</span>
+     invoke :&#39;deploy:link_shared_paths&#39;
+     invoke :&#39;bundle:install&#39;
+     invoke :&#39;rails:db_migrate&#39;
+<span class="gu">@@ -55,10 +77,7 @@</span>
      invoke :&#39;deploy:cleanup&#39;
  
-     to :launch do
-<span class="gd">-      queue &quot;mkdir -p #{deploy_to}/#{current_path}/tmp/&quot;</span>
-<span class="gd">-      queue &quot;touch #{deploy_to}/#{current_path}/tmp/restart.txt&quot;</span>
-<span class="gi">+      #queue &quot;sudo service #{user} restart&quot;</span>
+     on :launch do
+<span class="gd">-      in_path(fetch(:current_path)) do</span>
+<span class="gd">-        command %{mkdir -p tmp/}</span>
+<span class="gd">-        command %{touch tmp/restart.txt}</span>
+<span class="gd">-      end</span>
+<span class="gi">+      command &quot;sudo service #{fetch(:user)} restart&quot;</span>
      end
    end
- end
+ 
 </pre></div>
 </body>
 </html>
