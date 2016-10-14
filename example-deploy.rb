@@ -77,7 +77,7 @@ task :deploy do
     invoke :'deploy:cleanup'
 
     on :launch do
-      command "sudo service #{fetch(:user)} restart"
+      # command "sudo service #{fetch(:user)} restart"
     end
   end
 
