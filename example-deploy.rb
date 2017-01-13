@@ -8,8 +8,9 @@ require 'mina/rvm'
 #   repository   - Git repo to clone from. (needed by mina/git)
 #   branch       - Branch name to deploy. (needed by mina/git)
 
-set :domain, 'foobar.com'
-set :user, 'rails-demo'
+set :application_name, 'rails-demo'
+set :domain, 'example.com'
+set :user, fetch(:application_name)
 set :deploy_to, "/home/#{fetch(:user)}/app"
 set :repository, 'git@bitbucket.org:example/rails-demo.git'
 set :branch, 'master'
@@ -20,10 +21,11 @@ set :rvm_use_path, '/etc/profile.d/rvm.sh'
 #   set :port, '30000'           # SSH port number.
 #   set :forward_agent, true     # SSH forward_agent.
 
-# They will be linked in the 'deploy:link_shared_paths' step.
+# shared dirs and files will be symlinked into the app-folder by the 'deploy:link_shared_paths' step.
+# set :shared_dirs, fetch(:shared_dirs, []).push('somedir')
 set :shared_files, fetch(:shared_files, []).push('config/database.yml', 'config/secrets.yml')
 
-# This task is the environment that is loaded all remote run commands, such as
+# This task is the environment that is loaded for all remote run commands, such as
 # `mina deploy` or `mina rake`.
 task :environment do
   ruby_version = File.read('.ruby-version').strip
@@ -36,7 +38,7 @@ task :setup do
 
   in_path(fetch(:shared_path)) do
 
-    command %[mkdir config]
+    command %[mkdir -p config]
 
     # Create database.yml for Postgres if it doesn't exist
     path_database_yml = "config/database.yml"
@@ -66,10 +68,6 @@ task :deploy do
     # Put things that will set up an empty directory into a fully set-up
     # instance of your project.
     invoke :'git:clone'
-    # Workaround for https://github.com/mina-deploy/mina/issues/452
-    fetch(:shared_files, []).each do |linked_path|
-      command %{rm -f "./#{linked_path}"}
-    end
     invoke :'deploy:link_shared_paths'
     invoke :'bundle:install'
     invoke :'rails:db_migrate'
@@ -82,9 +80,9 @@ task :deploy do
   end
 
   # you can use `run :local` to run tasks on local machine before of after the deploy scripts
-  # run :local { say 'done' }
+  # run(:local){ say 'done' }
 end
 
 # For help in making your deploy script, see the Mina documentation:
 #
-#  - https://github.com/mina-deploy/mina/docs
+#  - https://github.com/mina-deploy/mina/tree/master/docs
