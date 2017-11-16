@@ -15,8 +15,10 @@ body .c { color: #008800; font-style: italic } /* Comment */
 body .err { border: 1px solid #FF0000 } /* Error */
 body .k { color: #AA22FF; font-weight: bold } /* Keyword */
 body .o { color: #666666 } /* Operator */
+body .ch { color: #008800; font-style: italic } /* Comment.Hashbang */
 body .cm { color: #008800; font-style: italic } /* Comment.Multiline */
 body .cp { color: #008800 } /* Comment.Preproc */
+body .cpf { color: #008800; font-style: italic } /* Comment.PreprocFile */
 body .c1 { color: #008800; font-style: italic } /* Comment.Single */
 body .cs { color: #008800; font-weight: bold } /* Comment.Special */
 body .gd { color: #A00000 } /* Generic.Deleted */
@@ -56,8 +58,10 @@ body .mf { color: #666666 } /* Literal.Number.Float */
 body .mh { color: #666666 } /* Literal.Number.Hex */
 body .mi { color: #666666 } /* Literal.Number.Integer */
 body .mo { color: #666666 } /* Literal.Number.Oct */
+body .sa { color: #BB4444 } /* Literal.String.Affix */
 body .sb { color: #BB4444 } /* Literal.String.Backtick */
 body .sc { color: #BB4444 } /* Literal.String.Char */
+body .dl { color: #BB4444 } /* Literal.String.Delimiter */
 body .sd { color: #BB4444; font-style: italic } /* Literal.String.Doc */
 body .s2 { color: #BB4444 } /* Literal.String.Double */
 body .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
@@ -68,9 +72,11 @@ body .sr { color: #BB6688 } /* Literal.String.Regex */
 body .s1 { color: #BB4444 } /* Literal.String.Single */
 body .ss { color: #B8860B } /* Literal.String.Symbol */
 body .bp { color: #AA22FF } /* Name.Builtin.Pseudo */
+body .fm { color: #00A000 } /* Name.Function.Magic */
 body .vc { color: #B8860B } /* Name.Variable.Class */
 body .vg { color: #B8860B } /* Name.Variable.Global */
 body .vi { color: #B8860B } /* Name.Variable.Instance */
+body .vm { color: #B8860B } /* Name.Variable.Magic */
 body .il { color: #666666 } /* Literal.Number.Integer.Long */
 
   </style>
@@ -78,8 +84,8 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
 <body>
 <h2></h2>
 
-<div class="highlight"><pre><span class="gd">--- config/deploy.rb	2017-01-13 14:22:14.000000000 +0100</span>
-<span class="gi">+++ example-deploy.rb	2017-01-13 14:09:42.000000000 +0100</span>
+<div class="highlight"><pre><span></span><span class="gd">--- config/deploy.rb	2017-11-16 19:08:34.138156279 +0100</span>
+<span class="gi">+++ example-deploy.rb	2017-11-16 19:06:53.592804433 +0100</span>
 <span class="gu">@@ -1,7 +1,6 @@</span>
  require &#39;mina/rails&#39;
  require &#39;mina/git&#39;
@@ -107,16 +113,16 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
  
  # Optional settings:
  #   set :user, &#39;foobar&#39;          # Username in the server to SSH to.
-<span class="gu">@@ -22,23 +23,41 @@</span>
- 
- # shared dirs and files will be symlinked into the app-folder by the &#39;deploy:link_shared_paths&#39; step.
- # set :shared_dirs, fetch(:shared_dirs, []).push(&#39;somedir&#39;)
+<span class="gu">@@ -24,23 +25,43 @@</span>
+ # Some plugins already add folders to shared_dirs like `mina/rails` add `public/assets`, `vendor/bundle` and many more
+ # run `mina -d` to see all folders and files already included in `shared_dirs` and `shared_files`
+ # set :shared_dirs, fetch(:shared_dirs, []).push(&#39;public/assets&#39;)
 <span class="gd">-# set :shared_files, fetch(:shared_files, []).push(&#39;config/database.yml&#39;, &#39;config/secrets.yml&#39;)</span>
 <span class="gi">+set :shared_files, fetch(:shared_files, []).push(&#39;config/database.yml&#39;, &#39;config/secrets.yml&#39;)</span>
  
  # This task is the environment that is loaded for all remote run commands, such as
  # `mina deploy` or `mina rake`.
- task :environment do
+ task :remote_environment do
 <span class="gd">-  # If you&#39;re using rbenv, use this to load the rbenv environment.</span>
 <span class="gd">-  # Be sure to commit your .ruby-version or .rbenv-version to your repository.</span>
 <span class="gd">-  # invoke :&#39;rbenv:load&#39;</span>
@@ -128,10 +134,10 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
 <span class="gi">+  invoke :&#39;rvm:use&#39;, ruby_version</span>
  end
  
-<span class="gd">-# Put any custom commands you need to run at setup</span>
-<span class="gd">-# All paths in `shared_dirs` and `shared_paths` will be created on their own.</span>
+ # Put any custom commands you need to run at setup
+ # All paths in `shared_dirs` and `shared_paths` will be created on their own.
  task :setup do
-<span class="gd">-  # command %{rbenv install 2.3.0}</span>
+<span class="gd">-  # command %{rbenv install 2.3.0 --skip-existing}</span>
 <span class="gi">+</span>
 <span class="gi">+  in_path(fetch(:shared_path)) do</span>
 <span class="gi">+</span>
@@ -148,7 +154,7 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
 <span class="gi">+</span>
 <span class="gi">+    # Create secrets.yml if it doesn&#39;t exist</span>
 <span class="gi">+    path_secrets_yml = &quot;config/secrets.yml&quot;</span>
-<span class="gi">+    secrets_yml = %[production:\n  secret_key_base:\n    #{`rake secret`.strip}]</span>
+<span class="gi">+    secrets_yml = %[production:\n  secret_key_base:\n    #{`bundle exec rake secret`.strip}]</span>
 <span class="gi">+    command %[test -e #{path_secrets_yml} || echo &quot;#{secrets_yml}&quot; &gt; #{path_secrets_yml}]</span>
 <span class="gi">+    </span>
 <span class="gi">+    # Remove others-permission for config directory</span>
@@ -158,7 +164,7 @@ body .il { color: #666666 } /* Literal.Number.Integer.Long */
  end
  
  desc &quot;Deploys the current version to the server.&quot;
-<span class="gu">@@ -56,10 +75,7 @@</span>
+<span class="gu">@@ -58,10 +79,7 @@</span>
      invoke :&#39;deploy:cleanup&#39;
  
      on :launch do

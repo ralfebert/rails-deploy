@@ -21,19 +21,23 @@ set :rvm_use_path, '/etc/profile.d/rvm.sh'
 #   set :port, '30000'           # SSH port number.
 #   set :forward_agent, true     # SSH forward_agent.
 
-# shared dirs and files will be symlinked into the app-folder by the 'deploy:link_shared_paths' step.
-# set :shared_dirs, fetch(:shared_dirs, []).push('somedir')
+# Shared dirs and files will be symlinked into the app-folder by the 'deploy:link_shared_paths' step.
+# Some plugins already add folders to shared_dirs like `mina/rails` add `public/assets`, `vendor/bundle` and many more
+# run `mina -d` to see all folders and files already included in `shared_dirs` and `shared_files`
+# set :shared_dirs, fetch(:shared_dirs, []).push('public/assets')
 set :shared_files, fetch(:shared_files, []).push('config/database.yml', 'config/secrets.yml')
 
 # This task is the environment that is loaded for all remote run commands, such as
 # `mina deploy` or `mina rake`.
-task :environment do
+task :remote_environment do
   ruby_version = File.read('.ruby-version').strip
   raise "Couldn't determine Ruby version: Do you have a file .ruby-version in your project root?" if ruby_version.empty?
 
   invoke :'rvm:use', ruby_version
 end
 
+# Put any custom commands you need to run at setup
+# All paths in `shared_dirs` and `shared_paths` will be created on their own.
 task :setup do
 
   in_path(fetch(:shared_path)) do
@@ -51,7 +55,7 @@ task :setup do
 
     # Create secrets.yml if it doesn't exist
     path_secrets_yml = "config/secrets.yml"
-    secrets_yml = %[production:\n  secret_key_base:\n    #{`rake secret`.strip}]
+    secrets_yml = %[production:\n  secret_key_base:\n    #{`bundle exec rake secret`.strip}]
     command %[test -e #{path_secrets_yml} || echo "#{secrets_yml}" > #{path_secrets_yml}]
     
     # Remove others-permission for config directory
