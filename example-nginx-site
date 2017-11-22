@@ -10,7 +10,7 @@ server {
 	
 	location ~ ^/(assets)/  {
 		gzip_static on; # to serve pre-gzipped version
-		expires max;
+		expires 1M;
 		add_header Cache-Control public;
 	}
 
