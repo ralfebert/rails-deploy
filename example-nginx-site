@@ -8,8 +8,8 @@ server {
 
 	root /home/rails-demo/app/current/public;
 	
-	location ~ ^/(assets)/  {
-		gzip_static on; # to serve pre-gzipped version
+	location /assets/  {
+		gzip_static on; # serve pre-gzipped version
 		expires 1M;
 		add_header Cache-Control public;
 	}
