@@ -12,7 +12,7 @@ set :application_name, 'rails-demo'
 set :domain, 'example.com'
 set :user, fetch(:application_name)
 set :deploy_to, "/home/#{fetch(:user)}/app"
-set :repository, 'git@bitbucket.org:example/rails-demo.git'
+set :repository, 'git@github.com:example/rails-demo.git'
 set :branch, 'master'
 set :rvm_use_path, '/etc/profile.d/rvm.sh'
 
