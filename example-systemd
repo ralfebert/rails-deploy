@@ -8,11 +8,14 @@ WorkingDirectory=/home/rails-demo/app/
 User=rails-demo
 ExecStart=/usr/local/rvm/bin/rvm in /home/rails-demo/app/current/ do bundle exec unicorn -D -c /home/rails-demo/app/shared/config/unicorn.conf.rb -E production
 SyslogIdentifier=unicorn-rails-demo
+# stop by sending only the main process a SIGQUIT signal
+KillMode=process
+KillSignal=SIGQUIT
 # Enable reloading unicorn via HUP signal
 ExecReload=/bin/kill -HUP $MAINPID
-# Try to restart the service after 5 seconds
+# Try to restart the service after 1 second
 Restart=always
-RestartSec=5
+RestartSec=1
 # Path to Unicorn PID file (as specified in unicorn configuration file)
 PIDFile=/home/rails-demo/app/shared/unicorn.pid
 
