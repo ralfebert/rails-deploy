@@ -1,0 +1,18 @@
+[Unit]
+Description=rails-demo service
+After=network.target
+
+[Service]
+Type=forking
+WorkingDirectory=/home/rails-demo/app/
+User=rails-demo
+ExecStart=/usr/local/rvm/bin/rvm in /home/rails-demo/app/current/ do bundle exec unicorn -D -c /home/rails-demo/app/shared/config/unicorn.conf.rb -E production
+SyslogIdentifier=unicorn-rails-demo
+# Try to restart the service after 5 seconds
+Restart=always
+RestartSec=5
+# Path to Unicorn PID file (as specified in unicorn configuration file)
+PIDFile=/home/rails-demo/app/shared/unicorn.pid
+
+[Install]
+WantedBy=multi-user.target
